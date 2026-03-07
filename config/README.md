@@ -1,147 +1,137 @@
 # EventStaff Database Setup Guide
 
-## 📋 Database Information
+This document explains how to set up and verify the EventStaff database in a local XAMPP environment.
 
-- **Database Name:** `eventstaff_db`
-- **Host:** `localhost`
-- **Username:** `root`
-- **Password:** _(empty for XAMPP)_
+## Database Configuration
 
----
+- Database name: `eventstaff_db`
+- Host: `localhost`
+- Username: `root`
+- Password: empty (XAMPP default)
 
-## 🚀 How to Setup Database
+These values are defined in `config/database.php`.
 
-### Method 1: Using phpMyAdmin (Easiest)
+## Prerequisites
 
-1. **Start XAMPP**
-   - Open XAMPP Control Panel
-   - Start **Apache** and **MySQL**
+- XAMPP installed
+- Apache and MySQL running
+- Project path: `/Applications/XAMPP/xamppfiles/htdocs/EventStaff`
 
-2. **Open phpMyAdmin**
-   - Go to: http://localhost/phpmyadmin
-   - Or click "Admin" button next to MySQL in XAMPP
+## Setup Methods
 
-3. **Import SQL File**
-   - Click on **"Import"** tab at the top
-   - Click **"Choose File"** button
-   - Select: `config/setup.sql`
-   - Click **"Go"** button at the bottom
-   - Wait for success message
+### Method 1: phpMyAdmin
 
-4. **Verify Setup**
-   - Click on `eventstaff_db` database in left sidebar
-   - You should see 7 tables:
-     - users
-     - employee_profiles
-     - organizer_profiles
-     - events
-     - event_shifts
-     - shift_applications
-     - payments
+1. Open XAMPP Control Panel.
+2. Start Apache and MySQL.
+3. Open `http://localhost/phpmyadmin`.
+4. Go to the Import tab.
+5. Choose file: `config/setup.sql`.
+6. Click Go and wait for success.
 
----
-
-### Method 2: Using MySQL Command Line
+### Method 2: MySQL CLI
 
 ```bash
-# Navigate to your project folder
 cd /Applications/XAMPP/xamppfiles/htdocs/EventStaff
-
-# Run the SQL file
 /Applications/XAMPP/xamppfiles/bin/mysql -u root < config/setup.sql
 ```
 
----
+## Notifications Table
 
-## 👤 Default Login Credentials
+The `notifications` table is not part of `config/setup.sql`, but the app handles it in two ways:
 
-After running the setup script, you can login with these test accounts:
+- Automatic creation in `config/database.php` with `CREATE TABLE IF NOT EXISTS`.
+- Manual migration file available at `migrations/001_create_notifications_table.sql`.
 
-### Admin Account
-- **Email:** admin@eventstaff.com
-- **Password:** admin123
+If your app cannot use notifications, run the migration manually:
 
-### Organizer Account (Test)
-- **Email:** organizer@test.com
-- **Password:** password123
+```bash
+cd /Applications/XAMPP/xamppfiles/htdocs/EventStaff
+/Applications/XAMPP/xamppfiles/bin/mysql -u root eventstaff_db < migrations/001_create_notifications_table.sql
+```
 
-### Employee Account (Test)
-- **Email:** employee@test.com
-- **Password:** password123
+## Default Test Accounts
 
----
+Inserted by `config/setup.sql`:
 
-## 🗄️ Database Structure
+- Admin: `admin@eventstaff.com` / `admin123`
+- Organizer: `organizer@test.com` / `password123`
+- Employee: `employee@test.com` / `password123`
 
-### Table: `users`
-Main authentication table
-- id, email, password (MD5), role (admin/organizer/employee), created_at
+Note: passwords are stored with MD5 in this project seed data.
 
-### Table: `employee_profiles`
-Worker profile information
-- id, user_id (FK), full_name, phone, skills, experience, created_at
+## Expected Tables
 
-### Table: `organizer_profiles`
-Company profile information
-- id, user_id (FK), company_name, contact_person, phone, address, created_at
+After setup and first app load, you should have:
 
-### Table: `events`
-Event listings by organizers
-- id, organizer_id (FK), title, description, location, event_date, created_at
+1. `users`
+2. `employee_profiles`
+3. `organizer_profiles`
+4. `events`
+5. `event_shifts`
+6. `shift_applications`
+7. `payments`
+8. `notifications`
 
-### Table: `event_shifts`
-Shifts/jobs within events
-- id, event_id (FK), shift_date, start_time, end_time, required_staff, payment_per_shift, status, created_at
+## Verify Connection
 
-### Table: `shift_applications`
-Employee applications for shifts
-- id, shift_id (FK), employee_id (FK), application_status (pending/approved/rejected), applied_at, reviewed_at
+Open:
 
-### Table: `payments`
-Payment tracking for approved work
-- id, application_id (FK), amount, payment_status (pending/paid), paid_at, created_at
+- `http://localhost/EventStaff/config/test_connection.php`
 
----
+Expected result:
 
-## ✅ Test Your Database Connection
+- "Connection Successful" message
+- database metadata
+- visible table list
+- sample user rows
 
-After setup, visit:
-- http://localhost/EventStaff/config/test_connection.php
+## Quick Troubleshooting
 
-You should see a success message with green background.
+### Access denied for user root
 
----
+- Ensure MySQL is running in XAMPP.
+- Confirm `config/database.php` has the right credentials.
+- If you set a MySQL root password, update `DB_PASS`.
 
-## 🔧 Troubleshooting
+### Unknown database eventstaff_db
 
-### Error: "Access denied for user 'root'"
-- Make sure MySQL is running in XAMPP
-- Check if password is empty (XAMPP default)
-- Try restarting MySQL in XAMPP
+- Re-import `config/setup.sql`.
+- Confirm the database exists in phpMyAdmin.
 
-### Error: "Unknown database 'eventstaff_db'"
-- The database wasn't created
-- Re-run the setup.sql file
-- Check phpMyAdmin if database exists
+### Duplicate entry or table already exists
 
-### Error: "Table already exists"
-- Database is already set up
-- You can drop the database and re-import:
-  ```sql
-  DROP DATABASE eventstaff_db;
-  ```
-  Then re-run setup.sql
+- This can happen if setup is imported multiple times.
+- For a clean reset:
 
----
+```sql
+DROP DATABASE IF EXISTS eventstaff_db;
+```
 
-## 📝 Next Steps
+Then re-run `config/setup.sql`.
 
-After database setup is complete:
-1. ✅ Test database connection
-2. Create authentication pages (register/login)
-3. Build user dashboards
-4. Implement features
+### Notifications not appearing
 
----
+- Confirm `notifications` table exists.
+- Check if `config/database.php` is loaded in the failing page.
+- Run migration: `migrations/001_create_notifications_table.sql`.
 
-**Need help?** Check the main README.md or contact your instructor.
+## Useful Files
+
+- `config/setup.sql` - base schema and seed users
+- `config/database.php` - PDO connection and notifications auto-create
+- `config/test_connection.php` - browser-based connection checker
+- `config/NotificationService.php` - notification CRUD and email sender
+- `migrations/001_create_notifications_table.sql` - notifications migration
+
+## Security Note (Development vs Production)
+
+Current defaults are development-friendly only:
+
+- root with empty password
+- MD5-hashed seed passwords
+
+For production, use:
+
+- dedicated DB user with strong password
+- `password_hash()` / `password_verify()`
+- environment-based secret management
